@@ -1,10 +1,16 @@
 package projetos.jonas.cloudparking.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import org.modelmapper.internal.bytebuddy.dynamic.loading.InjectionClassLoader;
+import org.springframework.boot.autoconfigure.web.WebProperties;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
+@Entity
 public class Parking {
-
+    @Id
     private String id;
     private String license;
     private String state;

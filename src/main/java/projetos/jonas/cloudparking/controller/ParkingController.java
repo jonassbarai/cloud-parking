@@ -61,7 +61,7 @@ public class ParkingController {
 
     @PostMapping("/{id}")
     public ResponseEntity exit(@PathVariable String id){
-        Parking parking = parking = service.exit(id);
+        Parking parking = parking = service.checkout(id);
         var result = parkingMapper.parkingDTO(parking);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }

@@ -1,8 +1,10 @@
 package projetos.jonas.cloudparking.service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import projetos.jonas.cloudparking.exceptions.ParkingNotFoundException;
 import projetos.jonas.cloudparking.model.Parking;
+import projetos.jonas.cloudparking.repository.ParkingRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,55 +13,59 @@ import java.util.stream.Collectors;
 
 @Service
 public class ParkingService {
-    private static Map<String, Parking> parkingMap = new HashMap<>();
 
-    static{
-        var id = getUUID();
-        Parking parking = new Parking(id,"DFD-1515","SP","CELTA","PRETO");
-        parkingMap.put(id,parking);
+    private final ParkingRepository repository;
+
+    public ParkingService(ParkingRepository repository){
+        this.repository =repository;
     }
+
     private static String getUUID(){
         return UUID.randomUUID().toString().replace("-","");
     }
 
     public List<Parking> findall(){
-       return new ArrayList<Parking>(parkingMap.values());
+        List<Parking> allParkings = repository.findAll();
+        return  allParkings;
     }
 
     public Parking findById(String id){
-        Parking parking = parkingMap.get(id);
+        Parking byId = repository.findById(id).orElseThrow(() -> new ParkingNotFoundException(id));
 
-        if(parking == null)
-             throw new ParkingNotFoundException(id);
-
-        return parking;
+        return byId;
     }
 
-
+    @Transactional
     public Parking create(Parking parking) {
+
         parking.setId(getUUID());
         parking.setEntryDate(LocalDateTime.now());
-        parkingMap.put(parking.getId(),parking);
+        repository.save(parking);
+
         return parking;
     }
-
+    @Transactional
     public void deleteById(String id) {
        Parking parking = findById(id);
-       parkingMap.remove(id);
+       repository.deleteById(id);
     }
-
+    @Transactional
     public Parking update(String id, Parking parkingUpdate) {
         Parking actual = findById(id);
         actual.setColor(parkingUpdate.getColor());
-        parkingMap.replace(id,actual);
+        actual.setState(parkingUpdate.getState());
+        actual.setModel(parkingUpdate.getModel());
+        actual.setLicense(parkingUpdate.getLicense());
+        repository.save(actual);
         return actual;
     }
-
-    public Parking exit(String id) {
-        Parking actual = findById(id);
-        actual.setExitDate(LocalDate.now().atStartOfDay());
-        update(id,actual);
-        return actual;
+    @Transactional
+    public Parking checkout(String id) {
+        Parking byId = repository.findById(id).orElse(null);
+        byId.setExitDate(LocalDateTime.now());
+        byId.setBill(ParkingCheckout.getBil(byId));
+        repository.save(byId);
+        return byId;
     }
 }
 
